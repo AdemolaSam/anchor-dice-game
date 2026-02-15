@@ -39,13 +39,18 @@ describe("anchor-dice-game-q4-25", () => {
   let signature: Uint8Array;
 
   it("Airdrop", async () => {
-    // Airdrop sol to house and player
     await Promise.all(
       [house, player].map(async (key) => {
-        return await provider.connection.requestAirdrop(
+        const sig = await provider.connection.requestAirdrop(
           key.publicKey,
-          1000 * LAMPORTS_PER_SOL,
+          10 * LAMPORTS_PER_SOL,
         );
+        // wait for each airdrop to confirm
+        const latestBlockHash = await provider.connection.getLatestBlockhash();
+        await provider.connection.confirmTransaction({
+          signature: sig,
+          ...latestBlockHash,
+        });
       }),
     );
   });
@@ -53,7 +58,7 @@ describe("anchor-dice-game-q4-25", () => {
   it("Is initialized!", async () => {
     // Intialize house and vault
     const tx = await program.methods
-      .initialize(new BN(LAMPORTS_PER_SOL).mul(new BN(100)))
+      .initialize(new BN(LAMPORTS_PER_SOL).mul(new BN(4)))
       .accountsStrict({
         house: house.publicKey,
         vault,
